@@ -1,49 +1,65 @@
 import React, { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 
 const Register: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { register } = useAuth();
 
-    const handleSubmit = async() => {
+    const handleSubmit = async () => {
         try {
             await register(email, password);
-            alert("Registration successful");
+            Alert.alert("Success", "Registration successful");
         } catch (error) {
             console.error(error);
-            alert("Registration failed. Please try again.");
+            Alert.alert("Error", "Registration failed. Please try again.");
         }
-    }
+    };
 
-  return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h1 className="text-4xl font-bold mb-8">Signup</h1>
-      <form className="flex flex-col items-center">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border border-gray-400 rounded-md px-4 py-2 mb-4"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border border-gray-400 rounded-md px-4 py-2 mb-4"
-        />
-        <button
-          type="submit"
-          onClick={handleSubmit}
-          className="bg-blue-500 text-white rounded-md px-4 py-2"
-        >
-          Register
-        </button>
-      </form>
-    </div>
-  );
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>Register</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+            />
+            <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+            />
+            <Button title="Register" onPress={handleSubmit} />
+        </View>
+    );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 16,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: "bold",
+        marginBottom: 20,
+    },
+    input: {
+        width: "100%",
+        padding: 10,
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 8,
+        marginBottom: 16,
+    },
+});
 
 export default Register;

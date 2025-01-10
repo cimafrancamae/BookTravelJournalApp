@@ -62,9 +62,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register 
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
