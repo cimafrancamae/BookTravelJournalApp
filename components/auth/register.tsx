@@ -1,16 +1,19 @@
 import React, { useState } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import { useRouter } from "expo-router";
 
 const Register: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { register } = useAuth();
+    const router = useRouter();
 
     const handleSubmit = async () => {
         try {
             await register(email, password);
             Alert.alert("Success", "Registration successful");
+            router.push("/");
         } catch (error) {
             console.error(error);
             Alert.alert("Error", "Registration failed. Please try again.");

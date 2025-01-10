@@ -9,7 +9,7 @@ import {
 import { auth } from "@/firebaseConfig";
 
 interface AuthContextType {
-  currentUser: User | null;
+  user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -31,12 +31,13 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
+      console.log("Auth state changed:", user);
+      setUser(user);
       setLoading(false);
     });
     return unsubscribe;
@@ -52,10 +53,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async (): Promise<void> => {
     await signOut(auth);
+    setUser(null);
   };
 
   const value: AuthContextType = { 
-    currentUser, 
+    user, 
     loading, 
     login, 
     logout, 
