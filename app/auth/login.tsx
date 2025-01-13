@@ -1,25 +1,19 @@
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { View, TextInput, Button, StyleSheet, Alert } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
-
-type RootStackParamList = {
-    "(tabs)": undefined;
-    "+not-found": undefined;
-};
+import { useRouter } from "expo-router";
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { login } = useAuth();
-    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const router = useRouter();
 
     const handleLogin = async () => {
         try {
             await login(email, password);
             Alert.alert("Success", "Login successful!");
-            navigation.navigate("(tabs)");
+            router.replace('/');
         } catch (error) {
             console.error(error);
             Alert.alert("Error", "Login failed. Please try again.");

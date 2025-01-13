@@ -1,4 +1,4 @@
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs, useSegments } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
@@ -11,21 +11,30 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 import { Button, Text, View, StyleSheet } from 'react-native';
 
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+type RootStackParamList = {
+  "index": undefined;
+};
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   const { user, logout } = useAuth();
-  const router = useRouter();
-
+  const segments = useSegments();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const currentPath = '/' + segments.join('/');
+  
+  
   const handleLogout = async () => {
     await logout();
-    router.replace("/");
   };
-
+  
   useEffect(() => {
-    console.log("TabLayout User:", user);
+    console.log('user:',user,'Current Path:', currentPath);
     if (!user) {
-      router.replace("/"); // Redirect to login when user logs out
+      navigation.navigate("index");
     }
   }, [user]);  
 
