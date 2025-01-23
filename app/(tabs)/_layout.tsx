@@ -9,7 +9,7 @@ import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
-import { Button, Text, View, StyleSheet } from 'react-native';
+import { Button, Text, View } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -40,7 +40,7 @@ export default function TabLayout() {
 
   return (
     <>
-      <View style={styles.container}>
+      <View className='flex-row justify-between items-center p-4'>
         <Text>Welcome, {user?.email || "User"}!</Text>
         <Button title="Logout" onPress={handleLogout} />
       </View>
@@ -76,7 +76,3 @@ export default function TabLayout() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center" },
-});
