@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, Button, Alert } from "react-native";
 import { useRouter } from "expo-router";
 
 const Register: React.FC = () => {
@@ -21,10 +21,10 @@ const Register: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Register</Text>
+        <View className="flex-1 justify-center items-center p-16">
+            <Text className="text-2xl font-bold mb-4">Register</Text>
             <TextInput
-                style={styles.input}
+                className="w-full p-2 mb-4 border border-gray-300 rounded-md"
                 placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
@@ -32,7 +32,7 @@ const Register: React.FC = () => {
                 autoCapitalize="none"
             />
             <TextInput
-                style={styles.input}
+                className="w-full p-2 mb-4 border border-gray-300 rounded-md"
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
@@ -42,27 +42,5 @@ const Register: React.FC = () => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 16,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: "bold",
-        marginBottom: 20,
-    },
-    input: {
-        width: "100%",
-        padding: 10,
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 8,
-        marginBottom: 16,
-    },
-});
 
 export default Register;

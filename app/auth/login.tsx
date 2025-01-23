@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { View, TextInput, Button, StyleSheet, Alert } from "react-native";
+import { View, TextInput, Button, Alert } from "react-native";
 import { useRouter } from "expo-router";
 
 const Login: React.FC = () => {
@@ -21,9 +21,9 @@ const Login: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <View className="flex-1 justify-center items-center p-16">
             <TextInput
-                style={styles.input}
+                className="w-full p-2 border border-gray-300 rounded-lg mb-2"
                 placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
@@ -31,7 +31,7 @@ const Login: React.FC = () => {
                 autoCapitalize="none"
             />
             <TextInput
-                style={styles.input}
+                className="w-full p-2 border border-gray-300 rounded-lg mb-2"
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
@@ -41,22 +41,5 @@ const Login: React.FC = () => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 16,
-    },
-    input: {
-        width: "100%",
-        padding: 10,
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 8,
-        marginBottom: 16,
-    },
-});
 
 export default Login;

@@ -19,14 +19,14 @@ const Index = () => {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View className='flex-1 justify-center items-center'>
         <Text>Loading...</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <View className='flex-1 justify-center items-center'>
       {!loading && !user && (
         <>
           {isRegistering ? <Register /> : <Login />}
