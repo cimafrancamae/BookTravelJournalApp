@@ -1,18 +1,56 @@
-import React from 'react';
-import { Image, View, TextInput, Button, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { Image, View, TextInput, Button, Platform, Alert } from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
-import { db } from '@/firebaseConfig';
+import { db, storage } from '@/firebaseConfig';
 import { addDoc, collection } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { Asset, launchImageLibrary } from 'react-native-image-picker';
 
 export default function HomeScreen() {
-  const [title, setTitle] = React.useState('');
-  const [description, setDescription] = React.useState('');
-  const [tags, setTags] = React.useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [tags, setTags] = useState('');
+  const [image, setImage] = useState<Asset | null>(null);
+  const [imageURL, setImageURL] = useState<string | null>(null)
+
+  const selectImage = async () => {
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      quality: 1,
+    });
+
+    if (result.didCancel) {
+      Alert.alert('Cancelled', 'Image selection cancelled');
+      return
+    }
+
+    if (result.assets && result.assets.length > 0) {
+      const selectedAsset = result.assets[0];
+      setImage(selectedAsset);
+      setImageURL(selectedAsset?.uri ?? null);
+    }
+  };
+
+  const uploadImage = async () => {
+    if (!image) {
+      Alert.alert('No image selected');
+      return;
+    }
+
+    const response = await fetch(image.uri ?? '');
+    const blob = await response.blob();
+
+    const storageRef = ref(storage, `images/${image.fileName}`);
+    const snapshot = await uploadBytes(storageRef, blob);
+
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    setImageURL(downloadURL);
+  };
 
   const handlePost = async () => {
     if (!title || !description || !tags) {
@@ -57,6 +95,18 @@ export default function HomeScreen() {
           className='w-1/2 h-1/2 bottom-0 left-0 absolute'
         />
       }>
+      <ThemedView className="flex-row items-center justify-center mt-10">
+        <ThemedText className="text-xl font-bold">Photo</ThemedText>
+        <Button title="Select Image" onPress={selectImage} />
+        {imageURL && (
+          <Image
+            source={{ uri: imageURL }}
+            className="w-20 h-20 rounded-full ml-2"
+            resizeMode='cover'
+          />
+        )}
+        <Button title="Upload Image" onPress={uploadImage} />
+      </ThemedView>
       <View className="flex-1 justify-center items-center p-16">
           <TextInput
               className="w-full p-2 border border-gray-300 rounded-lg mb-2"
