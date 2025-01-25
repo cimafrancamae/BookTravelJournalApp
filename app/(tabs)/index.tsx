@@ -10,6 +10,7 @@ import { db, storage } from '@/firebaseConfig';
 import { addDoc, collection } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Asset, launchImageLibrary } from 'react-native-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function HomeScreen() {
   const [title, setTitle] = useState('');
@@ -19,19 +20,24 @@ export default function HomeScreen() {
   const [imageURL, setImageURL] = useState<string | null>(null)
 
   const selectImage = async () => {
-    const result = await launchImageLibrary({
-      mediaType: 'photo',
-      quality: 1,
-    });
+    // const result = await launchImageLibrary({
+    //   mediaType: 'photo',
+    //   quality: 1,
+    // });
 
-    if (result.didCancel) {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: 'images',
+      quality: 1
+    })
+
+    if (result.canceled) {
       Alert.alert('Cancelled', 'Image selection cancelled');
       return
     }
 
     if (result.assets && result.assets.length > 0) {
       const selectedAsset = result.assets[0];
-      setImage(selectedAsset);
+      setImage(selectedAsset as Asset | null);
       setImageURL(selectedAsset?.uri ?? null);
     }
   };
