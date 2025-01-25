@@ -9,6 +9,7 @@ import { Slot } from 'expo-router';
 import "@/global.css"
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { PaperProvider } from 'react-native-paper';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -32,8 +33,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <AuthProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <StatusBar style="auto" />
-        <Slot />
+        <PaperProvider>
+          <StatusBar style="auto" />
+          <Slot />
+        </PaperProvider>
       </ThemeProvider>
     </AuthProvider>
   );
