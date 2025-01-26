@@ -12,7 +12,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Asset, launchImageLibrary } from 'react-native-image-picker';
 import * as ImagePicker from 'expo-image-picker';
 
-export default function HomeScreen() {
+export default function JournalScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
@@ -102,8 +102,41 @@ export default function HomeScreen() {
         />
       }>
       <ThemedView className="flex-row items-center justify-center mt-10">
-        <ThemedText className="text-xl font-bold">Home</ThemedText>
+        <ThemedText className="text-xl font-bold">Photo</ThemedText>
+        <Button title="Select Image" onPress={selectImage} />
+        {imageURL && (
+          <Image
+            source={{ uri: imageURL }}
+            className="w-20 h-20 rounded-full ml-2"
+            resizeMode='cover'
+          />
+        )}
+        <Button title="Upload Image" onPress={uploadImage} />
       </ThemedView>
+      <View className="flex-1 justify-center items-center p-16">
+          <TextInput
+              className="w-full p-2 border border-gray-300 rounded-lg mb-2"
+              placeholder="Title"
+              value={title}
+              onChangeText={setTitle}
+              autoCapitalize="none"
+          />
+          <TextInput
+              className="w-full p-2 border border-gray-300 rounded-lg mb-2"
+              placeholder="Description"
+              value={description}
+              onChangeText={setDescription}
+              autoCapitalize="none"
+          />
+          <TextInput
+              className="w-full p-2 border border-gray-300 rounded-lg mb-2"
+              placeholder="Tags"
+              value={tags}
+              onChangeText={setTags}
+              autoCapitalize="none"
+          />
+          <Button title="Post" onPress={handlePost} />
+      </View>
     </ParallaxScrollView>
   );
 }
