@@ -1,142 +1,132 @@
-import React, { useState } from 'react';
-import { Image, View, TextInput, Button, Platform, Alert } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-import { db, storage } from '@/firebaseConfig';
-import { addDoc, collection } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Asset, launchImageLibrary } from 'react-native-image-picker';
+import { CameraView, CameraType, useCameraPermissions, CameraCapturedPicture, Camera } from 'expo-camera';
+import React, { useState, useRef } from 'react';
+import {  Text, TouchableOpacity, View, Image, TextInput, Dimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Button } from 'react-native-paper';
+import { db, storage } from '@/firebaseConfig';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, addDoc } from 'firebase/firestore';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-export default function JournalScreen() {
-  const [title, setTitle] = useState('');
+export default function App() {
+  const [facing, setFacing] = useState<CameraType>('back');
+  const [permission, requestPermission] = useCameraPermissions();
+  const [image, setImage] = useState<string | null>(null);
   const [description, setDescription] = useState('');
-  const [tags, setTags] = useState('');
-  const [image, setImage] = useState<Asset | null>(null);
-  const [imageURL, setImageURL] = useState<string | null>(null)
+  const [hashtags, setHashtags] = useState('');
+  const [uploading, setUploading] = useState(false);
+  // const cameraRef = useRef<typeof Camera | null>(null);
+  const cameraRef = useRef<CameraView>(null); // Corrected type
+  const screenHeight = Dimensions.get("window").height; // Get full screen height
 
-  const selectImage = async () => {
-    // const result = await launchImageLibrary({
-    //   mediaType: 'photo',
-    //   quality: 1,
-    // });
+  if (!permission) {
+    // Camera permissions are still loading.
+    return <View />;
+  }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
-      quality: 1
-    })
+  if (!permission.granted) {
+    // Camera permissions are not granted yet.
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <Text className='text-lg align-center pb-4'>We need your permission to show the camera</Text>
+        <Button onPress={requestPermission}>Grant permission</Button>
+      </View>
+    );
+  }
 
-    if (result.canceled) {
-      Alert.alert('Cancelled', 'Image selection cancelled');
-      return
+  function toggleCameraFacing() {
+    console.log(facing);
+    setFacing(current => (current === 'back' ? 'front' : 'back'));
+  }
+
+  async function pickImage() {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 5],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
     }
+  }
 
-    if (result.assets && result.assets.length > 0) {
-      const selectedAsset = result.assets[0];
-      setImage(selectedAsset as Asset | null);
-      setImageURL(selectedAsset?.uri ?? null);
+  const capturePhoto = async () => {
+    if (cameraRef.current) {
+      try {
+        const photo = await cameraRef.current.takePictureAsync();
+        if (photo) {
+          console.log('Photo captured:', photo.uri);
+          setImage(photo.uri);
+        } else {
+          console.error('No photo captured');
+        }
+      } catch (error) {
+        console.error('Error capturing photo:', error);
+      }
     }
   };
 
-  const uploadImage = async () => {
-    if (!image) {
-      Alert.alert('No image selected');
-      return;
-    }
-
-    const response = await fetch(image.uri ?? '');
+  async function postImage() {
+    if (!image) return;
+    setUploading(true);
+    
+    const response = await fetch(image);
     const blob = await response.blob();
-
-    const storageRef = ref(storage, `images/${image.fileName}`);
-    const snapshot = await uploadBytes(storageRef, blob);
-
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    setImageURL(downloadURL);
-  };
-
-  const handlePost = async () => {
-    if (!title || !description || !tags) {
-      alert('Please fill in all fields!');
-      return;
-    }
+    const storageRef = ref(storage, `images/${Date.now()}.jpg`);
+    await uploadBytes(storageRef, blob);
+    const downloadURL = await getDownloadURL(storageRef);
     
-    try {
-      const docRef = await addDoc(collection(db, 'journalEntries'), {
-        title,
-        description,
-        tags,
-        createdAt: new Date().toISOString(),
-      });
-      console.log("Document written with ID: ", docRef.id);
-
-      //clear fields
-      setTitle('');
-      setDescription('');
-      setTags('');
-      
-      //show success message
-      alert('Post added successfully!');
-
-    } catch (e) {
-      console.error("Error adding document: ", e);
-      alert('Error adding post!');
-    }
+    await addDoc(collection(db, 'posts'), {
+      imageUrl: downloadURL,
+      description,
+      hashtags: hashtags.split(' '),
+      timestamp: new Date(),
+    });
     
-
-    console.log('Title:', title);
-    console.log('Description:', description);
-    console.log('Tags:', tags);
-  };
+    setImage(null);
+    setDescription('');
+    setHashtags('');
+    setUploading(false);
+  }
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/pexels-books.jpg')}
-          className='w-1/2 h-1/2 bottom-0 left-0 absolute'
-        />
-      }>
-      <ThemedView className="flex-row items-center justify-center mt-10">
-        <ThemedText className="text-xl font-bold">Photo</ThemedText>
-        <Button title="Select Image" onPress={selectImage} />
-        {imageURL && (
-          <Image
-            source={{ uri: imageURL }}
-            className="w-20 h-20 rounded-full ml-2"
-            resizeMode='cover'
-          />
-        )}
-        <Button title="Upload Image" onPress={uploadImage} />
-      </ThemedView>
-      <View className="flex-1 justify-center items-center p-16">
-          <TextInput
-              className="w-full p-2 border border-gray-300 rounded-lg mb-2"
-              placeholder="Title"
-              value={title}
-              onChangeText={setTitle}
-              autoCapitalize="none"
-          />
-          <TextInput
-              className="w-full p-2 border border-gray-300 rounded-lg mb-2"
-              placeholder="Description"
-              value={description}
-              onChangeText={setDescription}
-              autoCapitalize="none"
-          />
-          <TextInput
-              className="w-full p-2 border border-gray-300 rounded-lg mb-2"
-              placeholder="Tags"
-              value={tags}
-              onChangeText={setTags}
-              autoCapitalize="none"
-          />
-          <Button title="Post" onPress={handlePost} />
-      </View>
-    </ParallaxScrollView>
+    <View className='flex-1 justify-center'>
+      {!image ? (
+        <CameraView ref={cameraRef} className='flex-1' style={{ height: screenHeight - 80 }} facing={facing}>
+          <View className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center space-y-4">
+            <TouchableOpacity className='self-end flex-1 align-center' onPress={toggleCameraFacing}>
+              <Icon name="camera-flip" size={24} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity className='self-end flex-1 align-center' onPress={pickImage}>
+              <Icon name="image" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Capture Button at the Bottom Center */}
+          <View className="absolute bottom-8 w-full flex-row justify-center">
+            <TouchableOpacity 
+              className="w-16 h-16 bg-white rounded-full flex items-center justify-center" 
+              onPress={capturePhoto}
+            >
+              <Icon name="camera" size={32} color="black" />
+            </TouchableOpacity>
+          </View>
+        </CameraView>
+      ) : (
+        <View className="flex-1 justify-center items-center">
+           {/* Back Button */}
+            <TouchableOpacity className="absolute top-8 left-4 bg-gray-700 p-2 rounded-full" onPress={() => setImage(null)}>
+              <Icon name="arrow-left" size={24} color="white" />
+            </TouchableOpacity>
+            
+          <Image source={{ uri: image }} className="w-80 h-96 mb-4" />
+          <TextInput className="border p-2 w-80 mb-2" placeholder="Enter description..." value={description} onChangeText={setDescription} />
+          <TextInput className="border p-2 w-80 mb-4" placeholder="#hashtags" value={hashtags} onChangeText={setHashtags} />
+          <Button mode="contained" onPress={postImage} loading={uploading}>Post</Button>
+        </View>
+      )}
+    </View>
   );
 }
