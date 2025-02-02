@@ -8,7 +8,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc } from 'firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-export default function App() {
+export default function JournalPage() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [image, setImage] = useState<string | null>(null);
@@ -78,7 +78,7 @@ export default function App() {
     await uploadBytes(storageRef, blob);
     const downloadURL = await getDownloadURL(storageRef);
     
-    await addDoc(collection(db, 'posts'), {
+    await addDoc(collection(db, 'journals'), {
       imageUrl: downloadURL,
       description,
       hashtags: hashtags.split(' '),
