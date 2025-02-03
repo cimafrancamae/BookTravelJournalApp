@@ -1,109 +1,67 @@
-import React, { useState } from 'react';
-import { Image, View, TextInput, Button, Platform, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, ActivityIndicator, Dimensions } from 'react-native'
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/firebaseConfig'; 
+import { FlashList } from "@shopify/flash-list";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+type Journal = {
+  id: string;
+  imageUrl: string;
+  description: string;
+  height?: number;
+};
 
-import { db, storage } from '@/firebaseConfig';
-import { addDoc, collection } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Asset, launchImageLibrary } from 'react-native-image-picker';
-import * as ImagePicker from 'expo-image-picker';
+export default function HomePage() {
+  const [journals, setJournals] = useState<Journal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const screenWidth = Dimensions.get("window").width;
+  const columnWidth = (screenWidth - 20) / 2; 
 
-export default function HomeScreen() {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [tags, setTags] = useState('');
-  const [image, setImage] = useState<Asset | null>(null);
-  const [imageURL, setImageURL] = useState<string | null>(null)
-
-  const selectImage = async () => {
-    // const result = await launchImageLibrary({
-    //   mediaType: 'photo',
-    //   quality: 1,
-    // });
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
-      quality: 1
-    })
-
-    if (result.canceled) {
-      Alert.alert('Cancelled', 'Image selection cancelled');
-      return
+  useEffect(() => {
+    console.log('Fetching journals...');
+    async function fetchJournals() {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'journals'));
+        const journalData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          imageUrl: doc.data().imageUrl,
+          description: doc.data().description,
+          ...doc.data(),
+         }));
+         console.log('Fetched journals:', journalData);
+        setJournals(journalData);
+      } catch (error) {
+        console.error('Error fetching journals:', error);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    if (result.assets && result.assets.length > 0) {
-      const selectedAsset = result.assets[0];
-      setImage(selectedAsset as Asset | null);
-      setImageURL(selectedAsset?.uri ?? null);
-    }
-  };
+    fetchJournals();
+  }, []);
 
-  const uploadImage = async () => {
-    if (!image) {
-      Alert.alert('No image selected');
-      return;
-    }
-
-    const response = await fetch(image.uri ?? '');
-    const blob = await response.blob();
-
-    const storageRef = ref(storage, `images/${image.fileName}`);
-    const snapshot = await uploadBytes(storageRef, blob);
-
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    setImageURL(downloadURL);
-  };
-
-  const handlePost = async () => {
-    if (!title || !description || !tags) {
-      alert('Please fill in all fields!');
-      return;
-    }
-    
-    try {
-      const docRef = await addDoc(collection(db, 'journalEntries'), {
-        title,
-        description,
-        tags,
-        createdAt: new Date().toISOString(),
-      });
-      console.log("Document written with ID: ", docRef.id);
-
-      //clear fields
-      setTitle('');
-      setDescription('');
-      setTags('');
-      
-      //show success message
-      alert('Post added successfully!');
-
-    } catch (e) {
-      console.error("Error adding document: ", e);
-      alert('Error adding post!');
-    }
-    
-
-    console.log('Title:', title);
-    console.log('Description:', description);
-    console.log('Tags:', tags);
-  };
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/pexels-books.jpg')}
-          className='w-1/2 h-1/2 bottom-0 left-0 absolute'
-        />
-      }>
-      <ThemedView className="flex-row items-center justify-center mt-10">
-        <ThemedText className="text-xl font-bold">Home</ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View className="flex-1 bg-white p-2">
+      <FlashList
+        data={journals}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        estimatedItemSize={200}
+        renderItem={({ item }) => (
+          <View className="p-1">
+            <Image source={{ uri: item.imageUrl }} style={{ width: columnWidth, height: Math.random() * 100 + 150, borderRadius: 10 }} />
+            <Text className="text-center text-sm mt-1">{item.description}</Text>
+          </View>
+        )}
+      />
+    </View>
   );
 }
