@@ -29,7 +29,7 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files1
 .env*.local
 
 # typescript
@@ -38,3 +38,5 @@ yarn-error.*
 app-example
 firebaseConfig.js
 .env
+*.workspace
+*.plist
