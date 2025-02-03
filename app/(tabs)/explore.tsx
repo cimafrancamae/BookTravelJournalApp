@@ -1,109 +1,115 @@
-import { StyleSheet, Image, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, Image } from 'react-native';
+import { GOOGLE_BOOKS_API_KEY, GOOGLE_PLACES_API_KEY } from '@env';
+import * as Location from 'expo-location';
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+const SearchPage = () => {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [category, setCategory] = useState('books');
 
-export default function TabTwoScreen() {
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access location was denied');
+        return;
+      }
+  
+      let location = await Location.getCurrentPositionAsync({});
+      console.log("Current Location:", location);
+    })();
+  }, []);
+
+
+  const searchBooks = async () => {
+    const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&key=${GOOGLE_BOOKS_API_KEY}`);
+    const data = await response.json();
+    setResults(data.items || []);
+  };
+
+  const searchPlaces = async (type) => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+          alert('Permission to access location was denied');
+          return;
+      }
+  
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+  
+      console.log(`Searching for ${type} at ${latitude}, ${longitude}`);
+  
+      const response = await fetch(`http://localhost:3001/search-places?latitude=${latitude}&longitude=${longitude}&type=${type}`);
+      const data = await response.json();
+  
+      console.log('API Response:', data);
+  
+      setResults(data.results || []);
+    } catch (error) {
+      console.error('Error fetching places:', error); 
+    }
+};
+
+
+  const handleSearch = () => {
+    if (category === 'books' || category === 'authors') {
+      searchBooks();
+    } else if (category === 'libraries') {
+      searchPlaces('library');
+    } else if (category === 'cafes') {
+      searchPlaces('cafe');
+    }
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
-  );
-}
+    <View className='flex-1 p-4 bg-white'>
+      <TextInput
+        className='border p-2 rounded-lg'
+        placeholder='Search...'
+        value={query}
+        onChangeText={setQuery}
+      />
+      
+      <View className='flex-row justify-between mt-2'>
+        {['books', 'authors', 'libraries', 'cafes'].map((item) => (
+          <TouchableOpacity
+            key={item}
+            className={`p-2 rounded-lg ${category === item ? 'bg-blue-500' : 'bg-gray-300'}`}
+            onPress={() => setCategory(item)}
+          >
+            <Text className='text-white'>{item.toUpperCase()}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
+      <TouchableOpacity className='bg-blue-500 p-2 mt-2 rounded-lg' onPress={handleSearch}>
+        <Text className='text-white text-center'>Search</Text>
+      </TouchableOpacity>
+      
+      <FlatList
+        data={results}
+        keyExtractor={(item, index) => item.id || index.toString()}
+        renderItem={({ item }) => (
+          <View className='p-2 border-b'>
+            {category === 'books' || category === 'authors' ? (
+              <View>
+                <Image source={{ uri: item.volumeInfo?.imageLinks?.thumbnail }} className='w-16 h-24' />
+                <Text className='font-bold'>{item.volumeInfo?.title}</Text>
+                <Text>{item.volumeInfo?.authors?.join(', ')}</Text>
+              </View>
+            ) : (
+              <View>
+                <Text className='font-bold'>{item.name}</Text>
+                <Text>{item.vicinity}</Text>
+              </View>
+            )}
+          </View>
+        )}
+      />
+    </View>
+  );
+};
+
+export default SearchPage;

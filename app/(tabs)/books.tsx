@@ -6,8 +6,8 @@ export default function BooksPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [reviews, setReviews] = useState<Record<string, string[]>>({}); // Key-value pair: bookId -> array of user-added reviews
-  const [existingReviews, setExistingReviews] = useState<Record<string, string[]>>({}); // Key-value pair: bookId -> array of existing reviews
+  const [reviews, setReviews] = useState<Record<string, string[]>>({}); 
+  const [existingReviews, setExistingReviews] = useState<Record<string, string[]>>({}); 
 
   const fetchBooks = async () => {
     if (!searchQuery) return;
